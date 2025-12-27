@@ -5,6 +5,17 @@ from smoothscroller import SmoothScroller
 
 pygame.init()
 
+# Theme colors
+bgColor = (30, 30, 35)
+textColor = (220, 220, 220)
+labelColor = (160, 160, 170)
+accentColor = (100, 140, 200)
+
+# Fonts
+font = pygame.font.SysFont('Arial', 18)
+fontSmall = pygame.font.SysFont('Arial', 14)
+fontTitle = pygame.font.SysFont('Arial', 24, bold=True)
+
 screenWidth = 1600
 screenHeight = 950
 
@@ -39,7 +50,8 @@ scrollYMax = (mapHeight - zoomVertical) * tileSize
 screenRect = screen.get_rect()
 mapWindowRect.center = screenRect.center
 
-temp = pygame.image.load('reference.png').convert_alpha()
+# TEMP reference image
+# temp = pygame.image.load('reference.png').convert_alpha()
 
 def setZoom(index):
 
@@ -59,6 +71,18 @@ def setZoom(index):
 
     # Update relativeTileSize
     relativeTileSize = mapWindowWidth // zoomHorizontal
+
+def drawCheckerboard(surface, rect, cellSize = 8, color1 = (70, 70, 70), color2 = (90, 90, 90)):
+    
+    x0, y0, w, h = rect
+    for y in range(0, h, cellSize):
+        for x in range(0, w, cellSize):
+            color = color1 if (x // cellSize + y // cellSize) % 2 == 0 else color2
+            pygame.draw.rect(
+                surface,
+                color,
+                (x0 + x, y0 + y, cellSize, cellSize)
+            )
 
 def drawMapWindow():
 
@@ -120,18 +144,19 @@ while run:
     
     scroller.update()
 
+    screen.fill(bgColor)
     mapWindowSurface.fill((0, 0, 0))
 
     # TEMP Crop a section from temp
-    croppedImage = temp.subsurface(pygame.Rect(int(scroller.getRealOffsetX()), int(scroller.getRealOffsetY()), int(tileSize * (zoomHorizontal)), int(tileSize * (zoomVertical))))
-
+    # croppedImage = temp.subsurface(pygame.Rect(int(scroller.getRealOffsetX()), int(scroller.getRealOffsetY()), int(tileSize * (zoomHorizontal)), int(tileSize * (zoomVertical))))
     # TEMP Scale to exact dimensions
-    scaledImage = pygame.transform.scale(croppedImage, (1152, 864))
-
+    # scaledImage = pygame.transform.scale(croppedImage, (1152, 864))
     # TEMP Draw to mapWindowSurface
-    mapWindowSurface.blit(scaledImage, (0, 0))
+    # mapWindowSurface.blit(scaledImage, (0, 0))
 
     # Map window
+    drawCheckerboard(mapWindowSurface, mapWindowSurface.get_rect())
+
     drawMapWindow()
     
     screen.blit(mapWindowSurface, mapWindowRect.topleft)

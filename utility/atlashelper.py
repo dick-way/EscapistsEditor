@@ -17,17 +17,20 @@ pygame.display.set_caption('Atlas Helper')
 atlas = pygame.image.load('assets/tileset/prison0/ground_tiles.png').convert_alpha()
 atlasOffset = int (atlasSize * 0.03125)
 
-fontSize = 20
-font = pygame.font.SysFont("Monospace", fontSize)
+# Theme colors
+bgColor = (30, 30, 35)
+textColor = (220, 220, 220)
+labelColor = (160, 160, 170)
+accentColor = (100, 140, 200)
+highlightColor = (50, 50, 70)
+selectedColor = (255, 0, 0)
+
+# Fonts
+font = pygame.font.SysFont('Arial', 18)
+fontSmall = pygame.font.SysFont('Arial', 14)
 
 highlightedID = -1
 selectedID = -1
-
-# Colors
-textColor = (255, 255, 255)
-highlightColor = (0, 0, 0)
-selectedColor = (255, 0, 0)
-backgroundColor = (0, 0, 0)
 
 def drawCheckerboard(surface, rect, cellSize = 8, color1 = (70, 70, 70), color2 = (90, 90, 90)):
     
@@ -113,7 +116,7 @@ while run:
 
             selectedID = (tileY * tilesPerRow) + tileX
 
-    screen.fill(backgroundColor)
+    screen.fill(bgColor)
 
     # Background
     drawCheckerboard(screen, (atlasOffset, atlasOffset, atlasSize, atlasSize), cellSize = 8)
@@ -218,7 +221,7 @@ while run:
     xyLabel = font.render(f"X: {idx % tilesPerRow}, Y: {idx // tilesPerRow}", True, textColor)
 
     screen.blit(idLabel, (atlasOffset + (10 * tileSize), atlasSize + (2 * atlasOffset) + tileSize))
-    screen.blit(xyLabel, (atlasOffset + (10 * tileSize), atlasSize + (2 * atlasOffset) + tileSize + fontSize))
+    screen.blit(xyLabel, (atlasOffset + (10 * tileSize), atlasSize + (2 * atlasOffset) + tileSize + 22))
     
     # Redraw
     pygame.display.update()
