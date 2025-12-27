@@ -11,9 +11,9 @@ class SmoothScroller:
         self.velocityX = 0
         self.velocityY = 0
         self.friction = 0.90
-        self.sensitivity = 0.9 # Scroll speed
+        self.sensitivity = 0.8 # Scroll speed
 
-    def setScrollBounds(self, scrollXMax, scrollYMax): # TODO: Call this whenever changing zoom
+    def setScrollBounds(self, scrollXMax, scrollYMax):
 
         self.scrollXMax = scrollXMax
         self.scrollYMax = scrollYMax
