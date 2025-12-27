@@ -14,6 +14,8 @@ tileSize = 16
 screen = pygame.display.set_mode((screenWidth, screenHeight))
 pygame.display.set_caption('The Escapists Level Editor')
 
+temp = pygame.image.load('reference.png').convert_alpha()
+
 mapWidth = 108 # TODO: Tile count, from .bin data
 mapHeight = 88
 
@@ -59,6 +61,15 @@ while run:
     scroller.update()
 
     mapSurface.fill((0, 0, 0))
+
+    # Crop a section from temp
+    croppedImage = temp.subsurface(pygame.Rect(int(scroller.getRealOffsetX()), int(scroller.getRealOffsetY()), int(tileSize * (zoomHorizontal)), int(tileSize * (zoomVertical))))
+
+    # Scale to exact dimensions
+    scaledImage = pygame.transform.scale(croppedImage, (1152, 864))
+
+    # Draw to mapSurface
+    mapSurface.blit(scaledImage, (0, 0))
 
     # Map window
     drawMapWindow()
