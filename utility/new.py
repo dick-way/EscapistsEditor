@@ -1,11 +1,10 @@
-
 # Creates a new blank world as binary data
 #
 # Layers [7]:
 #   Underground - dirt, mines, rocks
 #   Ground - ground tiles
-#   Foreground - everything drawn above the player
 #   Collisions - invisible collisions for walls, trees, etc.
+#   Foreground - everything drawn above the player (drawn above walls for extra stuff)
 #   Vents
 #   Roof ground - roof ground tiles, pipes
 #   Roof - walls, ziplines, etc.
@@ -38,7 +37,7 @@ import os
 pygame.init()
 
 # Colors
-BG_COLOR = (30, 30, 35)
+BG_COLOR = (20, 20, 20)
 PANEL_COLOR = (45, 45, 50)
 FIELD_COLOR = (60, 60, 65)
 FIELD_ACTIVE_COLOR = (70, 70, 80)
@@ -51,7 +50,7 @@ ERROR_COLOR = (200, 80, 80)
 
 # Window setup
 WINDOW_WIDTH = 500
-WINDOW_HEIGHT = 400
+WINDOW_HEIGHT = 320
 screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption('New Level')
 
@@ -59,7 +58,6 @@ pygame.display.set_caption('New Level')
 font = pygame.font.SysFont('Arial', 18)
 fontSmall = pygame.font.SysFont('Arial', 14)
 fontTitle = pygame.font.SysFont('Arial', 24, bold=True)
-
 
 class InputField:
     def __init__(self, x, y, width, height, label, maxChars=32, numeric=False):
@@ -101,11 +99,11 @@ class InputField:
 
         # Field background
         color = FIELD_ACTIVE_COLOR if self.active else FIELD_COLOR
-        pygame.draw.rect(surface, color, self.rect, border_radius=6)
+        pygame.draw.rect(surface, color, self.rect, border_radius=2)
 
         # Border
         border_color = ACCENT_COLOR if self.active else (80, 80, 85)
-        pygame.draw.rect(surface, border_color, self.rect, 2, border_radius=6)
+        pygame.draw.rect(surface, border_color, self.rect, 2, border_radius=2)
 
         # Text
         textSurface = font.render(self.text, True, TEXT_COLOR)
@@ -137,7 +135,7 @@ class Button:
 
     def draw(self, surface):
         color = BUTTON_HOVER_COLOR if self.hovered else BUTTON_COLOR
-        pygame.draw.rect(surface, color, self.rect, border_radius=8)
+        pygame.draw.rect(surface, color, self.rect, border_radius=2)
 
         textSurface = font.render(self.text, True, TEXT_COLOR)
         textRect = textSurface.get_rect(center=self.rect.center)
@@ -145,10 +143,9 @@ class Button:
 
 
 def saveLevel(prisonName, width, height, filename):
-    """Save level data to binary file."""
-    # Ensure filename has .bin extension
-    if not filename.endswith('.bin'):
-        filename += '.bin'
+    # Ensure filename has .map extension
+    if not filename.endswith('.map'):
+        filename += '.map'
 
     # Prepare prison name (pad to 32 bytes)
     nameBytes = prisonName.encode('utf-8')[:32]
@@ -202,14 +199,12 @@ def main():
                    'Width (tiles)', maxChars=3, numeric=True),
         InputField(startX + 150, startY + spacing, 120, fieldHeight,
                    'Height (tiles)', maxChars=3, numeric=True),
-        InputField(startX, startY + spacing * 2, fieldWidth, fieldHeight,
-                   'Filename', maxChars=64),
     ]
 
     fields[0].active = True  # Start with first field active
 
     # Create save button
-    saveButton = Button(startX, startY + spacing * 3 + 20, 120, 44, 'Save')
+    saveButton = Button(startX, startY + spacing * 2, 120, 44, 'Save')
 
     # Status message
     statusMessage = ''
@@ -236,7 +231,6 @@ def main():
                 prisonName = fields[0].text
                 width = fields[1].getValue()
                 height = fields[2].getValue()
-                filename = fields[3].text
 
                 # Validation
                 if not prisonName:
@@ -251,13 +245,9 @@ def main():
                     statusMessage = 'Height must be between 1 and 255'
                     statusColor = ERROR_COLOR
                     statusTime = currentTime
-                elif not filename:
-                    statusMessage = 'Please enter a filename'
-                    statusColor = ERROR_COLOR
-                    statusTime = currentTime
                 else:
                     try:
-                        savedPath = saveLevel(prisonName, width, height, filename)
+                        savedPath = saveLevel(prisonName, width, height, 'prison.map')
                         statusMessage = f'Saved: {savedPath}'
                         statusColor = ACCENT_COLOR
                         statusTime = currentTime
@@ -285,7 +275,7 @@ def main():
             alpha = 255 if currentTime - statusTime < 2500 else int(255 * (3000 - (currentTime - statusTime)) / 500)
             statusSurface = fontSmall.render(statusMessage, True, statusColor)
             statusSurface.set_alpha(alpha)
-            screen.blit(statusSurface, (startX + 140, startY + spacing * 3 + 32))
+            screen.blit(statusSurface, (startX + 140, startY + spacing * 2 + 32))
 
         # Info text
         infoText = fontSmall.render('Level data will be initialized with empty tiles (all zeros)', True, LABEL_COLOR)

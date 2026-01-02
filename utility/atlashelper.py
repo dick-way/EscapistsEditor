@@ -18,16 +18,17 @@ atlas = pygame.image.load('assets/tileset/prison0/ground_tiles.png').convert_alp
 atlasOffset = int (atlasSize * 0.03125)
 
 # Theme colors
-bgColor = (30, 30, 35)
-textColor = (220, 220, 220)
-labelColor = (160, 160, 170)
-accentColor = (100, 140, 200)
-highlightColor = (50, 50, 70)
-selectedColor = (255, 0, 0)
+BG_COLOR = (20, 20, 20)
+TEXT_COLOR = (220, 220, 220)
+LABEL_COLOR = (160, 160, 170)
+ACCENT_COLOR = (100, 140, 200)
+HIGHLIGHT_COLOR = (50, 50, 70)
+SELECTED_COLOR = (255, 0, 0)
+
+idOffset = 1
 
 # Fonts
 font = pygame.font.SysFont('Arial', 18)
-fontSmall = pygame.font.SysFont('Arial', 14)
 
 highlightedID = -1
 selectedID = -1
@@ -116,7 +117,7 @@ while run:
 
             selectedID = (tileY * tilesPerRow) + tileX
 
-    screen.fill(bgColor)
+    screen.fill(BG_COLOR)
 
     # Background
     drawCheckerboard(screen, (atlasOffset, atlasOffset, atlasSize, atlasSize), cellSize = 8)
@@ -140,11 +141,11 @@ while run:
         highlightedID = tileY * tilesPerRow + tileX # ID of highlighted tile
 
         highlightRect = pygame.Rect(atlasOffset + (tileX * tileSize), atlasOffset + (tileY * tileSize), tileSize, tileSize)
-        pygame.draw.rect(screen, highlightColor, highlightRect, 1) # Cursor highlight
+        pygame.draw.rect(screen, HIGHLIGHT_COLOR, highlightRect, 1) # Cursor highlight
 
     if selectedID != -1:
         highlightRect = pygame.Rect(atlasOffset + (selectedID % tilesPerRow * tileSize), atlasOffset + (selectedID // tilesPerRow * tileSize), tileSize, tileSize)
-        pygame.draw.rect(screen, selectedColor, highlightRect, 1) # Selected highlight
+        pygame.draw.rect(screen, SELECTED_COLOR, highlightRect, 1) # Selected highlight
 
     # 3x3 preview
     idx = highlightedID
@@ -185,7 +186,7 @@ while run:
     # 3x3 grid - horizontal lines
     pygame.draw.line(
         screen,
-        highlightColor,
+        HIGHLIGHT_COLOR,
         (atlasOffset + (3 * tileSize), atlasSize + (2 * atlasOffset) + tileSize),
         (atlasOffset + (3 * tileSize), atlasSize + (2 * atlasOffset) + (10 * tileSize)),
         thickness
@@ -193,7 +194,7 @@ while run:
 
     pygame.draw.line(
         screen,
-        highlightColor,
+        HIGHLIGHT_COLOR,
         (atlasOffset + (6 * tileSize), atlasSize + (2 * atlasOffset) + tileSize),
         (atlasOffset + (6 * tileSize), atlasSize + (2 * atlasOffset) + (10 * tileSize)),
         thickness
@@ -202,7 +203,7 @@ while run:
     # 3x3 grid - vertical lines
     pygame.draw.line(
         screen,
-        highlightColor,
+        HIGHLIGHT_COLOR,
         (atlasOffset, atlasSize + (2 * atlasOffset) + (4 * tileSize)),
         (atlasOffset + (9 * tileSize), atlasSize + (2 * atlasOffset) + (4 * tileSize)),
         thickness
@@ -210,15 +211,15 @@ while run:
     
     pygame.draw.line(
         screen,
-        highlightColor,
+        HIGHLIGHT_COLOR,
         (atlasOffset, atlasSize + (2 * atlasOffset) + (7 * tileSize)),
         (atlasOffset + (9 * tileSize), atlasSize + (2 * atlasOffset) + (7 * tileSize)),
         thickness
     )
 
     # Preview info
-    idLabel = font.render(f"ID: {idx}", True, textColor)
-    xyLabel = font.render(f"X: {idx % tilesPerRow}, Y: {idx // tilesPerRow}", True, textColor)
+    idLabel = font.render(f"ID: {idx + idOffset}", True, TEXT_COLOR)
+    xyLabel = font.render(f"X: {idx % tilesPerRow}, Y: {idx // tilesPerRow}", True, TEXT_COLOR)
 
     screen.blit(idLabel, (atlasOffset + (10 * tileSize), atlasSize + (2 * atlasOffset) + tileSize))
     screen.blit(xyLabel, (atlasOffset + (10 * tileSize), atlasSize + (2 * atlasOffset) + tileSize + 22))

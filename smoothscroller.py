@@ -59,9 +59,7 @@ class SmoothScroller:
         self.velocityY *= self.friction
 
     def getRealOffsetX(self):
-
         return int(self.scrollXMax - self.scrollX)
 
     def getRealOffsetY(self):
-
         return int(self.scrollYMax - self.scrollY)

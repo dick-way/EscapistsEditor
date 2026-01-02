@@ -1,1 +1,4 @@
 assets/
+*.bin
+*.map
+reference.png
