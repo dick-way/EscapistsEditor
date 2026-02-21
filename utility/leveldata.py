@@ -70,8 +70,9 @@ class LevelData:
         return 0
 
     def setTile(self, layer, x, y, tileID):
-        if 0 <= layer < 7 and 0 <= y < self.height and 0 <= x < self.width:
-            self.layers[layer][y][x] = tileID
+        if tileID > -1:
+            if 0 <= layer < 7 and 0 <= y < self.height and 0 <= x < self.width:
+                self.layers[layer][y][x] = tileID
 
     def createBlank(self, prisonName, width, height):
         self.prisonName = prisonName

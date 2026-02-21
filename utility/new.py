@@ -142,7 +142,7 @@ class Button:
         surface.blit(textSurface, textRect)
 
 
-def saveLevel(prisonName, width, height, filename):
+def saveLevel(prisonName, width, height, groundTileID, filename): # Generic level data for new level
     # Ensure filename has .map extension
     if not filename.endswith('.map'):
         filename += '.map'
@@ -170,10 +170,14 @@ def saveLevel(prisonName, width, height, filename):
     # Height (uint8)
     data.append(height)
 
-    # 7 layers of uint16 data (all zeros)
+    # 7 layers of uint16 data
     for layer in range(7):
         for tile in range(layerSize):
-            data.extend(struct.pack('<H', 0))  # Little-endian uint16
+            # Ground tile
+            if layer == 1:
+                data.extend(struct.pack('<H', groundTileID))
+            else:
+                data.extend(struct.pack('<H', 0)) # Little-endian uint16
 
     # Write to file
     with open(filename, 'wb') as f:
@@ -199,6 +203,8 @@ def main():
                    'Width (tiles)', maxChars=3, numeric=True),
         InputField(startX + 150, startY + spacing, 120, fieldHeight,
                    'Height (tiles)', maxChars=3, numeric=True),
+        InputField(startX + 300, startY + spacing, 120, fieldHeight,
+                   'Ground Tile ID', maxChars=5, numeric=True),
     ]
 
     fields[0].active = True  # Start with first field active
@@ -231,6 +237,7 @@ def main():
                 prisonName = fields[0].text
                 width = fields[1].getValue()
                 height = fields[2].getValue()
+                groundTileID = fields[3].getValue()
 
                 # Validation
                 if not prisonName:
@@ -245,9 +252,13 @@ def main():
                     statusMessage = 'Height must be between 1 and 255'
                     statusColor = ERROR_COLOR
                     statusTime = currentTime
+                elif groundTileID < 0 or groundTileID > 65535:
+                    statusMessage = 'Tile must be between 0 and 65535'
+                    statusColor = ERROR_COLOR
+                    statusTime = currentTime
                 else:
                     try:
-                        savedPath = saveLevel(prisonName, width, height, 'prison.map')
+                        savedPath = saveLevel(prisonName, width, height, groundTileID, 'prison.map')
                         statusMessage = f'Saved: {savedPath}'
                         statusColor = ACCENT_COLOR
                         statusTime = currentTime
@@ -275,10 +286,10 @@ def main():
             alpha = 255 if currentTime - statusTime < 2500 else int(255 * (3000 - (currentTime - statusTime)) / 500)
             statusSurface = fontSmall.render(statusMessage, True, statusColor)
             statusSurface.set_alpha(alpha)
-            screen.blit(statusSurface, (startX + 140, startY + spacing * 2 + 32))
+            screen.blit(statusSurface, (startX + 140, startY + spacing * 2 + 28))
 
         # Info text
-        infoText = fontSmall.render('Level data will be initialized with empty tiles (all zeros)', True, LABEL_COLOR)
+        infoText = fontSmall.render('This will overwrite all current level data', True, LABEL_COLOR)
         screen.blit(infoText, (startX, WINDOW_HEIGHT - 35))
 
         pygame.display.flip()

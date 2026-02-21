@@ -62,27 +62,46 @@
 #   0: Simplest palette with 2 mediums, 2 variations for each edge piece
 #   1: Same as 0, but contains variated corner sloped tiles (extra 4x4 diamond in tileset)
 
+selected = [
+
+    1, 0, 0 # Example: (1-Center Perks, 0-Grass on asphalt, 0-Regular (instead of inverse))
+
+]
+
+identicalTiles = [
+
+    # Allows you to set tiles that should be treated as the same thing (eg. identical grass tiles ACROSS SEPARATE PALETTES)
+    # THIS IS PRISON SPECIFIC
+
+    [
+        [34, 322, 418],
+
+        []
+    ]
+
+]
+
 paletteData = [
 
     # 0 - Tile Data
     [
-        
+    
         # Mapping to tileset - Base (δηλαδή, add the digit of the other items in paletteData to fully map tiles of that palette)
         # Palette Type 0:
-        [[2], [32, 130], [160], [1, 161], [162], [33], [96], [64], [65, 97], [98], [128], [129], [0], [66]],
+        [[3], [33, 131], [161], [2, 162], [163], [34], [97], [65], [66, 98], [99], [35, 129], [130], [1], [67]],
 
         # Palette Type 1:
-        [[2], [32, 130], [160], [1, 161], [162], [33], [96], [64], [65, 97], [98], [128], [129], [0], [66], [67, 68, 99, 100], [69, 70, 101, 102], [131, 132, 163, 164], [133, 134, 165, 166]],
+        [[3], [33, 131], [161], [2, 162], [163], [34], [97], [65], [66, 98], [99], [35, 129], [130], [1], [67], [68, 69, 100, 101], [70, 71, 102, 103], [132, 133, 164, 165], [134, 135, 166, 167]],
 
         # Tile Outline - Physical 2x2 matrix definition of tile shape
         [[0, 0, 1, 0], [0, 1, 0, 1], [1, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 0], [0, 1, 0, 0], [1, 1, 0, 0], [1, 1, 0, 1], [1, 0, 1, 0], [0, 0, 0, 0], [0, 0, 0, 1], [1, 0, 0, 0]]
-     
+    
     ],
 
     # 1 - Center Perks
     [
         # Grass on asphalt
-        [0, 1], # [Alignment ID, Palette Type]
+        [0, 1], # [Alignment ID, Palette Type, [Full grass variations?], [Full asphalt variations?]]
 
         # Foliage on grass
         [192, 1],
@@ -157,5 +176,14 @@ paletteData = [
         # Deep water on water
         [576, 0]
     ]
+
+]
+
+paintInfo = [
+
+    # Information for the 3x3 square that is placed in palette building mode
+    [12, 3, 0],
+    [1, 5, 10],
+    [7, 8, 13]
 
 ]

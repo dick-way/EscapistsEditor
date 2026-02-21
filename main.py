@@ -3,9 +3,11 @@ import subprocess
 import sys
 import os
 
-from info import palette
+# from info import palette
 from smoothscroller import SmoothScroller
 from utility.leveldata import LevelData
+from placetile import placeTile
+from info import palette
 
 # macOS native menu bar support
 menuActions = [] # Queue for menu actions
@@ -18,6 +20,10 @@ try:
     class MenuDelegate(NSObject):
         def newLevel_(self, sender):
             menuActions.append('newLevel')
+        def saveLevel_(self, sender):
+            menuActions.append('saveLevel')
+        def reloadLevel_(self, sender):
+            menuActions.append('reloadLevel')
 
         def setZoom0_(self, sender):
             menuActions.append(('zoom', 0))
@@ -63,6 +69,16 @@ try:
         newLevelItem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('New Level', 'newLevel:', 'n')
         newLevelItem.setTarget_(delegate)
         fileMenu.addItem_(newLevelItem)
+
+        # File > Save
+        saveLevelItem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('Save', 'saveLevel:', 's')
+        saveLevelItem.setTarget_(delegate)
+        fileMenu.addItem_(saveLevelItem)
+
+        # File > Reload
+        reloadLevelItem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('Reload','reloadLevel: ', 'r')
+        reloadLevelItem.setTarget_(delegate)
+        fileMenu.addItem_(reloadLevelItem)
 
         # Zoom menu
         zoomMenuItem = NSMenuItem.alloc().init()
@@ -111,8 +127,8 @@ tileSize = 16
 screen = pygame.display.set_mode((screenWidth, screenHeight))
 pygame.display.set_caption('The Escapists Level Editor')
 
-mapWidth = 108 # TODO: Tile count, from .bin data
-mapHeight = 88
+mapWidth = 96 # TODO: Tile count, from .map data
+mapHeight = 94
 
 # Create and center map window
 mapWindowWidth = 1152
@@ -146,10 +162,10 @@ selectedTileY = -1
 
 font = pygame.font.SysFont('Arial', 12)
 
-tileset = pygame.image.load('assets/tileset/prison0/ground_tiles.png').convert_alpha() # Contains tiles 1 - 1024
+selectedTileset = pygame.image.load('assets/tileset/prison0/ground_tiles.png').convert_alpha() # Contains tiles 1 - 1024
 
 level = LevelData()
-level.load('prison.map')
+level.load('prison.map') # Load map to edit
 
 def setZoom(index):
 
@@ -197,9 +213,18 @@ def getTileFromSet(image, idOffset, id):
 
     return tile
 
+def XYFromID(image, id):
+
+    width = image.get_width() // tileSize
+
+    return (id % width, id // width)
+
+def IDFromXY(image, point):
+    return 0
+
 def drawMapWindow():
 
-    layer = 0
+    layer = 1
 
     for x in range(-1, zoomHorizontal):
         for y in range(-1, zoomVertical):
@@ -208,7 +233,7 @@ def drawMapWindow():
             worldTileY = (scroller.getRealOffsetY() + (scroller.scrollY % tileSize)) // tileSize + y
 
             # Read from data and draw tiles
-            tileImage = getTileFromSet(tileset, -1, level.getTile(layer, worldTileX, worldTileY))
+            tileImage = getTileFromSet(selectedTileset, -1, level.getTile(layer, worldTileX, worldTileY))
 
             if tileImage != 0:
                 mapWindowSurface.blit(pygame.transform.scale(tileImage, (relativeTileSize, relativeTileSize)), ((x * relativeTileSize) + ((scroller.scrollX % tileSize) * (relativeTileSize / tileSize)), (y * relativeTileSize) + ((scroller.scrollY % tileSize) * (relativeTileSize / tileSize))))
@@ -221,6 +246,8 @@ def drawMapWindow():
 
 scroller = SmoothScroller(scrollXMax, scrollYMax)
 clock = pygame.time.Clock()
+
+mouseHeld = False
 
 run = True
 while run:
@@ -274,6 +301,14 @@ while run:
                 else:
                     # Shift not held
                     scroller.handleScroll(-event.x, event.y)
+            
+        # Click
+        elif event.type == pygame.MOUSEBUTTONDOWN and event.button <= 3:
+            mouseHeld = True
+
+        # Release
+        elif event.type == pygame.MOUSEBUTTONUP and event.button <= 3:
+            mouseHeld = False
 
     # Process menu actions
     while menuActions:
@@ -282,8 +317,18 @@ while run:
             # Launch new.py in a subprocess
             newLevelScript = os.path.join(scriptDir, 'utility', 'new.py')
             subprocess.Popen([sys.executable, newLevelScript])
+        elif action == 'saveLevel':
+            level.save('prison') # TODO: Multiple save directories
+            print("Level saved to prison.map")
+        elif action == 'reloadLevel':
+            level.load('prison')
+            print("Reloaded prison.map") # TODO: Multiple save directories
         elif isinstance(action, tuple) and action[0] == 'zoom':
             setZoom(action[1])
+
+    # Mouse held down
+    if mouseHeld and selectedTileX >= 0 and selectedTileY >= 0:
+        placeTile(level, selectedTileX, selectedTileY, 1)
 
     scroller.update()
 
@@ -295,6 +340,42 @@ while run:
 
     # Grid and tiles
     drawMapWindow()
+
+    # Selection Panel
+    panelWidth = (screenWidth - mapWindowWidth) // 2
+    leftBound = panelWidth + mapWindowWidth
+
+    selectionTileWidth = 80
+    selectionTileSpacing = (panelWidth - (2 * selectionTileWidth)) // 3
+    selectionPanelHeading = 22
+
+    selectionTileBorder = 1
+
+    availablePalettes = palette.paletteData[palette.selected[0]]
+    
+    for i in range (0, len(availablePalettes)):
+        x = (i % 2) + 1
+        y = (i + 2) // 2
+
+        inversionShift = 0
+
+        if selectionTileBorder > 1:
+            selectionTileBorder /= 3
+
+        selectionRect = pygame.Rect(leftBound + (selectionTileSpacing * x) + (selectionTileWidth * (x - 1)), selectionPanelHeading + (selectionTileSpacing * y) + (selectionTileWidth * (y - 1)), selectionTileWidth, selectionTileWidth)
+        pygame.draw.rect(screen, (255, 255, 255), selectionRect)
+
+        previewPoint = XYFromID(selectedTileset, availablePalettes[i][0])
+
+        if palette.selected[2] == 1 and i == palette.selected[1]:
+            inversionShift = 3
+
+        palettePreview = selectedTileset.subsurface(pygame.Rect(previewPoint[0] * tileSize, (previewPoint[1] + inversionShift) * tileSize, 48, 48))
+
+        if i == palette.selected[1]:
+            selectionTileBorder *= 3
+
+        screen.blit(pygame.transform.scale(palettePreview, (selectionTileWidth - (2 * selectionTileBorder), selectionTileWidth - (2 * selectionTileBorder))), (leftBound + (selectionTileSpacing * x) + (selectionTileWidth * (x - 1)) + selectionTileBorder, selectionPanelHeading + (selectionTileSpacing * y) + (selectionTileWidth * (y - 1)) + selectionTileBorder))
 
     # Highlighted tile
     if mapWindowRect.collidepoint(mousePos):
@@ -364,7 +445,7 @@ while run:
     # Debug values
     zoomLabel = font.render(f"Zoom: H: {zoomHorizontal}, V: {zoomVertical}, I: {zoomIndex}", True, TEXT_COLOR)
     scrollLabel = font.render(f"Scroll: X: {scroller.getRealOffsetX()}, Y: {scroller.getRealOffsetY()}", True, TEXT_COLOR)
-    selectedLabel = font.render(f"Selected: ({selectedTileX}, {selectedTileY})", True, TEXT_COLOR)
+    selectedLabel = font.render(f"Selected: ({selectedTileX}, {selectedTileY}), {level.getTile(1, selectedTileX, selectedTileY)}", True, TEXT_COLOR) # TODO: Make layering
 
     screen.blit(zoomLabel, (mapWindowWidth + ((screenWidth - mapWindowWidth) / 2) + 4, screenHeight - 40))
     screen.blit(scrollLabel, (mapWindowWidth + ((screenWidth - mapWindowWidth) / 2) + 4, screenHeight - 28))
