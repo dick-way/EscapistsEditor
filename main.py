@@ -154,6 +154,10 @@ relativeTileSize = mapWindowWidth // zoomHorizontal
 scrollXMax = (mapWidth - zoomHorizontal) * tileSize
 scrollYMax = (mapHeight - zoomVertical) * tileSize
 
+spacePanning = False
+panningRelativePos = (0, 0)
+panningRelativeScroll = (0, 0)
+
 screenRect = screen.get_rect()
 mapWindowRect.center = screenRect.center
 
@@ -184,7 +188,7 @@ def setZoom(index):
     scroller.setScrollBounds(scrollXMax, scrollYMax)
 
     # Update relativeTileSize
-    relativeTileSize = mapWindowWidth // zoomHorizontal
+    relativeTileSize = mapWindowWidth // zoomHorizontal    
 
 def drawCheckerboard(surface, rect, cellSize = 8, color1 = (70, 70, 70), color2 = (90, 90, 90)):
     
@@ -249,6 +253,20 @@ clock = pygame.time.Clock()
 
 mouseHeld = False
 
+# Selection Panel
+panelWidth = (screenWidth - mapWindowWidth) // 2
+leftBound = panelWidth + mapWindowWidth
+
+selectionTileWidth = 80
+selectionTileSpacing = (panelWidth - (2 * selectionTileWidth)) // 3
+selectionPanelHeading = 22
+
+selectionTileBorder = 1
+
+selectionInversion = list()
+for i in range(0, len(palette.paletteData[palette.selected[0]])):
+    selectionInversion.append(0)
+
 run = True
 while run:
 
@@ -258,14 +276,26 @@ while run:
         if event.type == pygame.QUIT:
             run = False
 
+        # Space panning
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                spacePanning = True
+                panningRelativePos = pygame.mouse.get_pos()
+                panningRelativeScroll = (scroller.scrollX, scroller.scrollY)
+        
+        elif event.type == pygame.KEYUP:
+            if event.key == pygame.K_SPACE:
+                spacePanning = False
+
         # Handle mouse wheel with shift key
         elif event.type == pygame.MOUSEWHEEL:
             if mapWindowRect.collidepoint(mousePos):
                 keys = pygame.key.get_mods()
                 if keys & pygame.KMOD_SHIFT:
-                    # Shift is held, adjust zoom
+
+                    # Shift is held, adjust zoom (not while panning)
                     currentTime = pygame.time.get_ticks()
-                    if currentTime - lastScrollTime > scrollCooldown:
+                    if currentTime - lastScrollTime > scrollCooldown and not spacePanning:
                         lastScrollTime = currentTime
 
                         # Calculate mouse position relative to map window
@@ -284,6 +314,12 @@ while run:
                             setZoom(zoomIndex + 1)
                         elif event.y < 0:
                             setZoom(zoomIndex - 1)
+                        elif event.y == 0:
+                            # Fixes mouse converting vertical scroll to horizontal scroll
+                            if event.x < 0:
+                                setZoom(zoomIndex + 1)
+                            elif event.x > 0:
+                                setZoom(zoomIndex - 1)
 
                         # Only adjust scroll if zoom actually changed
                         if zoomIndex != oldZoomIndex:
@@ -298,16 +334,33 @@ while run:
                             # Zero out velocity to prevent drift
                             scroller.velocityX = 0
                             scroller.velocityY = 0
+                    
                 else:
                     # Shift not held
                     scroller.handleScroll(-event.x, event.y)
             
         # Click
-        elif event.type == pygame.MOUSEBUTTONDOWN and event.button <= 3:
+        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             mouseHeld = True
 
+            # Update selection in panel            
+            for i in range(0, len(palette.paletteData[palette.selected[0]])):
+
+                x = i % 2
+                y = i // 2
+
+                if mousePos[0] > leftBound + ((x + 1) * selectionTileSpacing) + (x * selectionTileWidth) and mousePos[0] < leftBound + ((x + 1) * selectionTileSpacing) + (x * selectionTileWidth) + selectionTileWidth and mousePos[1] > selectionPanelHeading + ((y + 1) * selectionTileSpacing) + (y * selectionTileWidth) and mousePos[1] < selectionPanelHeading + ((y + 1) * selectionTileSpacing) + (y * selectionTileWidth) + selectionTileWidth:
+                    palette.selected[1] = i
+                    palette.selected[2] = selectionInversion[i]
+
+                    # Shift click to invert selection
+                    keys = pygame.key.get_mods()
+                    if keys & pygame.KMOD_SHIFT:
+                        selectionInversion[i] = selectionInversion[i] ^ 1
+                        palette.selected[2] = selectionInversion[i]
+
         # Release
-        elif event.type == pygame.MOUSEBUTTONUP and event.button <= 3:
+        elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
             mouseHeld = False
 
     # Process menu actions
@@ -330,6 +383,14 @@ while run:
     if mouseHeld and selectedTileX >= 0 and selectedTileY >= 0:
         placeTile(level, selectedTileX, selectedTileY, 1)
 
+    # Space panning
+    if spacePanning and mapWindowRect.collidepoint(mousePos):
+        offsetX = pygame.mouse.get_pos()[0] - panningRelativePos[0]
+        offsetY = pygame.mouse.get_pos()[1] - panningRelativePos[1]
+
+        scroller.scrollX = panningRelativeScroll[0] + offsetX * (tileSize / relativeTileSize)
+        scroller.scrollY = panningRelativeScroll[1] + offsetY * (tileSize / relativeTileSize)
+    
     scroller.update()
 
     screen.fill(BG_COLOR)
@@ -342,15 +403,6 @@ while run:
     drawMapWindow()
 
     # Selection Panel
-    panelWidth = (screenWidth - mapWindowWidth) // 2
-    leftBound = panelWidth + mapWindowWidth
-
-    selectionTileWidth = 80
-    selectionTileSpacing = (panelWidth - (2 * selectionTileWidth)) // 3
-    selectionPanelHeading = 22
-
-    selectionTileBorder = 1
-
     availablePalettes = palette.paletteData[palette.selected[0]]
     
     for i in range (0, len(availablePalettes)):
@@ -367,7 +419,7 @@ while run:
 
         previewPoint = XYFromID(selectedTileset, availablePalettes[i][0])
 
-        if palette.selected[2] == 1 and i == palette.selected[1]:
+        if selectionInversion[i] == 1:
             inversionShift = 3
 
         palettePreview = selectedTileset.subsurface(pygame.Rect(previewPoint[0] * tileSize, (previewPoint[1] + inversionShift) * tileSize, 48, 48))
@@ -392,7 +444,6 @@ while run:
         adjustedMouseY = mouseRelY - gridOffsetY
 
         # Which tile in the viewport (allow negative values for offscreen tiles)
-        # Use floor division to handle negative values correctly (int() truncates toward zero)
         viewportTileX = int(adjustedMouseX // relativeTileSize)
         viewportTileY = int(adjustedMouseY // relativeTileSize)
 
@@ -432,7 +483,7 @@ while run:
             if lineStartY < lineEndY:
                 pygame.draw.line(mapWindowSurface, (255, 255, 255), (rectX + relativeTileSize, lineStartY), (rectX + relativeTileSize, lineEndY), thickness)
 
-        # Global tile coordinates - calculate directly from mouse position and scroll
+        # Global tile coordinates calculated directly from mouse position and scroll
         selectedTileX = int((scroller.getRealOffsetX() + mouseRelX / relativeTileSize * tileSize) / tileSize)
         selectedTileY = int((scroller.getRealOffsetY() + mouseRelY / relativeTileSize * tileSize) / tileSize)
 

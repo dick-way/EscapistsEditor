@@ -3,11 +3,11 @@ import random
 import numpy
 from info import palette
 
-# If palette == 1, it will output a 3x3 around the center tile to connect 2 mediums
+# If manual == 1, it will output a 3x3 around the center tile to connect 2 mediums
 # Otherwise, it will replace the sole center tile and always overwrite (manual editing)
-def placeTile(level, tileX, tileY, palette):
+def placeTile(level, tileX, tileY, manual):
 
-    if palette == 0:
+    if manual == 0:
         # Manual tile overwrite
         level.setTile(1, tileX, tileY, 0)
 
@@ -47,6 +47,10 @@ def paletteTile(level, tileX, tileY, x, y):
     tile1 = numpy.array(palette.paletteData[0][2][palette.paintInfo[y + 1][x + 1]]) # Don't even know how to explain this
 
     tileResult = tile0 | tile1
+
+    if palette.selected[2] == 1:
+        # Inversion
+        tileResult = tileResult ^ 1
 
     # Don't replace identical tiles
     if (tile0 == tileResult).all():
