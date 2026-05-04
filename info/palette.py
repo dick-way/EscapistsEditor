@@ -77,7 +77,7 @@ identicalTiles = [
         [34, 322, 418],
 
         [514, 706]
-        
+
     ]
 
 ]
@@ -177,13 +177,5 @@ paletteData = [
         # Deep water on water
         [576, 0]
     ]
-
-]
-
-paintInfo = [
-
-    # Information for the 3x3 square that is placed in palette building mode
-    [12, 3, 0], [1, 5, 10], [7, 8, 13]
-    # [6, 8, 9], [10, 11, 1], [2, 3, 4] Inverted
 
 ]

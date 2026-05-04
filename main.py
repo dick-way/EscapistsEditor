@@ -130,6 +130,8 @@ pygame.display.set_caption('The Escapists Level Editor')
 mapWidth = 96 # TODO: Tile count, from .map data
 mapHeight = 94
 
+drawGridLines = True
+
 # Create and center map window
 mapWindowWidth = 1152
 mapWindowHeight = 864
@@ -242,11 +244,13 @@ def drawMapWindow():
             if tileImage != 0:
                 mapWindowSurface.blit(pygame.transform.scale(tileImage, (relativeTileSize, relativeTileSize)), ((x * relativeTileSize) + ((scroller.scrollX % tileSize) * (relativeTileSize / tileSize)), (y * relativeTileSize) + ((scroller.scrollY % tileSize) * (relativeTileSize / tileSize))))
 
-    for x in range(zoomHorizontal):
-        pygame.draw.line(mapWindowSurface, (255, 255, 255), ((x * relativeTileSize) + ((scroller.scrollX % tileSize) * (relativeTileSize / tileSize)), 0), ((x * relativeTileSize) + ((scroller.scrollX % tileSize) * (relativeTileSize / tileSize)), mapWindowHeight), 1)
-    
-    for y in range(zoomVertical):
-        pygame.draw.line(mapWindowSurface, (255, 255, 255), (0, (y * relativeTileSize) + ((scroller.scrollY % tileSize) * (relativeTileSize / tileSize))), (mapWindowWidth, (y * relativeTileSize) + ((scroller.scrollY % tileSize) * (relativeTileSize / tileSize))), 1)
+    if drawGridLines:
+
+        for x in range(zoomHorizontal):
+            pygame.draw.line(mapWindowSurface, (255, 255, 255), ((x * relativeTileSize) + ((scroller.scrollX % tileSize) * (relativeTileSize / tileSize)), 0), ((x * relativeTileSize) + ((scroller.scrollX % tileSize) * (relativeTileSize / tileSize)), mapWindowHeight), 1)
+        
+        for y in range(zoomVertical):
+            pygame.draw.line(mapWindowSurface, (255, 255, 255), (0, (y * relativeTileSize) + ((scroller.scrollY % tileSize) * (relativeTileSize / tileSize))), (mapWindowWidth, (y * relativeTileSize) + ((scroller.scrollY % tileSize) * (relativeTileSize / tileSize))), 1)
 
 scroller = SmoothScroller(scrollXMax, scrollYMax)
 clock = pygame.time.Clock()
@@ -381,7 +385,7 @@ while run:
 
     # Mouse held down
     if mouseHeld and selectedTileX >= 0 and selectedTileY >= 0:
-        placeTile(level, selectedTileX, selectedTileY, 1)
+        placeTile(level, selectedTileX, selectedTileY, 0)
 
     # Space panning
     if spacePanning and mapWindowRect.collidepoint(mousePos):
